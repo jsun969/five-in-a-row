@@ -1,6 +1,7 @@
 #include <array>
 #include <iomanip>
 #include <iostream>
+#include <tuple>
 #include <unordered_map>
 
 constexpr int SIZE = 15; // Must be less than 100
@@ -17,16 +18,17 @@ const std::unordered_map<Piece, char> PIECE_TO_CHAR = {
 	{ Piece::Black, 'B' }
 };
 
+const std::array<std::pair<int, int>, 4> DIRECTIONS = { {
+		{ 0, 1 }, // Horizontal
+		{ 1, 0 }, // Vertical
+		{ 1, 1 }, // Diagonal top-left to bottom-right
+		{ 1, -1 } // Diagonal top-right to bottom-left
+} };
+
 class Game {
 private:
 	std::array<std::array<Piece, SIZE>, SIZE> board;
 
-public:
-	Game() {
-		for (auto& row : board) {
-			row.fill(Piece::Empty);
-		}
-	};
 	void printBoard() const {
 		std::cout << "\033[2J\033[1;1H"; // Clear terminal
 		for (int i = 0; i < SIZE; ++i) {
@@ -51,25 +53,76 @@ public:
 		}
 		std::cout << '\n';
 	}
-	bool placePiece(int x, int y, Piece piece) {
+
+	std::tuple<int, int> xyToRowCol(int x, int y) const {
 		int row = SIZE - y;
 		int col = x - 1;
-		if (x < 0 || x >= SIZE || y < 0 || y >= SIZE || board[row][col] != Piece::Empty) {
+		return std::make_tuple(row, col);
+	}
+
+	bool checkRowColInBounds(int row, int col) const {
+		return row >= 0 && row < SIZE && col >= 0 && col < SIZE;
+	}
+
+	bool placePiece(int x, int y, Piece piece) {
+		auto [row, col] = xyToRowCol(x, y);
+		if (!checkRowColInBounds(row, col) || board[row][col] != Piece::Empty) {
 			return false;
 		}
 		board[row][col] = piece;
 		return true;
 	}
+
+	bool checkWin(int x, int y, Piece player) const {
+		auto [row, col] = xyToRowCol(x, y);
+		for (const auto& [dx, dy] : DIRECTIONS) {
+			int count = 1;
+			// Check in the (dx, dy) direction
+			for (int i = 1; i < 5; ++i) {
+				int newRow = row + dx * i, newCol = col + dy * i;
+				if (!checkRowColInBounds(newRow, newCol) || board[newRow][newCol] != player) {
+					break;
+				}
+				++count;
+			}
+			// Check in the (-dx, -dy) direction
+			int rdx = -dx, rdy = -dy;
+			for (int i = 1; i < 5; ++i) {
+				int newRow = row + rdx * i, newCol = col + rdy * i;
+				if (!checkRowColInBounds(newRow, newCol) || board[newRow][newCol] != player) {
+					break;
+				}
+				++count;
+			}
+			if (count >= 5) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+public:
+	Game() {
+		for (auto& row : board) {
+			row.fill(Piece::Empty);
+		}
+	};
+
 	void gameLoop() {
 		bool firstMove = true;
 		printBoard();
-		int x, y;
+		int x = -1, y = -1;
 		while (true) {
+			bool lastPlayerWin = checkWin(x, y, firstMove ? Piece::White : Piece::Black);
+			if (lastPlayerWin) {
+				std::cout << (firstMove ? "White" : "Black") << " wins!\n";
+				break;
+			}
 			do {
 				std::cout << (firstMove ? "Black" : "White") << "'s turn. Enter x y: ";
 				std::cin >> x >> y;
 			} while (!placePiece(x, y, firstMove ? Piece::Black : Piece::White));
-			firstMove = false;
+			firstMove = !firstMove;
 			printBoard();
 		}
 	}
