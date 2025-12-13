@@ -1,3 +1,5 @@
-build/game: src/main.cpp
+SRCS = $(wildcard src/*.cpp)
+
+build/game: $(SRCS)
 	mkdir -p build
-	clang++ -std=c++20 -Wall -Wextra src/main.cpp -o build/game
+	clang++ -std=c++20 -Wall -Wextra $(SRCS) -o build/game
