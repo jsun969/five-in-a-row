@@ -60,3 +60,7 @@ bool GamePlay::checkWin(int x, int y, Piece player) const {
 Board GamePlay::getBoard() const {
 	return board;
 }
+
+int GamePlay::getSize() const {
+	return size;
+}

@@ -24,4 +24,5 @@ public:
 	bool placePiece(int x, int y, Piece piece);
 	bool checkWin(int x, int y, Piece player) const;
 	Board getBoard() const;
+	int getSize() const;
 };
