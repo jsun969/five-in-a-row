@@ -1,6 +1,9 @@
 # Output folder
 /build/
 
+# MacOS
+.DS_Store
+
 # Prerequisites
 *.d
 
